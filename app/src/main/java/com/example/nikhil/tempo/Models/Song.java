@@ -14,6 +14,7 @@ public class Song implements Parcelable
     private String songDurationMinutesAndSeconds;
     private String songArtist;
     private String songPath;
+    private int songID;
 
     public Song(){}
 
@@ -24,6 +25,7 @@ public class Song implements Parcelable
         songDurationMinutesAndSeconds = in.readString();
         songArtist = in.readString();
         songPath = in.readString();
+        songID = in.readInt();
     }
 
     public String getSongTitle() {
@@ -66,6 +68,14 @@ public class Song implements Parcelable
         this.songPath = songPath;
     }
 
+    public int getSongID() {
+        return songID;
+    }
+
+    public void setSongID(int songID) {
+        this.songID = songID;
+    }
+
     @Override
     public void writeToParcel(Parcel out, int flags) {
         out.writeString(songTitle);
@@ -73,6 +83,7 @@ public class Song implements Parcelable
         out.writeString(songDurationMinutesAndSeconds);
         out.writeString(songArtist);
         out.writeString(songPath);
+        out.writeInt(songID);
     }
 
     @Override

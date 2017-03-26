@@ -1,44 +1,94 @@
 package com.example.nikhil.tempo;
 
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 import java.lang.Integer;
 import com.example.nikhil.tempo.Models.Song;
+import com.example.nikhil.tempo.MusicController.MusicController;
+import com.example.nikhil.tempo.Services.MusicService;
+import com.example.nikhil.tempo.Services.MusicService.MusicBinder;
+import android.widget.MediaController.MediaPlayerControl;
 
 import java.util.ArrayList;
 
 
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static android.R.id.list;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MediaPlayerControl{
 
     private boolean permissionsGranted = false;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
     public static ArrayList<Song> songs = new ArrayList<Song>();
+
+    //service
+    private MusicService musicSrv;
+    private Intent playIntent;
+    //binding
+    private boolean musicBound=false;
+
+    //controller
+    private MusicController controller;
+
+    //activity and playback pause flags
+    private boolean paused=false, playbackPaused=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         checkAndRequestPermissions();
+        Button button = (Button) findViewById(R.id.trigger_button);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                musicSrv.playSong();
+                controller.show(5000);
+            }
+        });
         initMp3FilesList();
-
-        for (Song s: songs)
-        {
-            Log.v("Tempo", s.getSongArtist() + " " + s.getSongTitle() + " " + s.getSongDuration() + " " + s.getSongDurationMinutesAndSeconds());
-            Log.v("Tempo", s.getSongPath());
-        }
+        setController();
     }
+
+    //connect to the service
+    private ServiceConnection musicConnection = new ServiceConnection(){
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            if(!songs.isEmpty())
+            {
+                Log.v("Tempo", "song list is not empty");
+            }
+            MusicBinder binder = (MusicBinder)service;
+            //get service
+            musicSrv = binder.getService();
+            //pass list
+            musicSrv.setList(songs);
+            musicBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            musicBound = false;
+        }
+    };
 
     @Override
     public void onResume()
@@ -47,6 +97,12 @@ public class MainActivity extends AppCompatActivity {
         if(permissionsGranted)
         {
             scanDeviceForMp3Files();
+        }
+
+        if(paused)
+        {
+            setController();
+            paused=false;
         }
     }
 
@@ -89,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
     {
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
         String[] projection = {
+                MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.Media.DATA,
                 MediaStore.Audio.Media.DURATION
@@ -104,12 +161,14 @@ public class MainActivity extends AppCompatActivity {
                 cursor.moveToFirst();
 
                 while( !cursor.isAfterLast() ){
-                    String title = cursor.getString(0);
-                    String path = cursor.getString(1);
-                    String songDuration = cursor.getString(2);
+                    int songid = cursor.getInt(0);
+                    String title = cursor.getString(1);
+                    String path = cursor.getString(2);
+                    String songDuration = cursor.getString(3);
                     cursor.moveToNext();
                     if(path != null && path.endsWith(".mp3")) {
                         Song song = parseInfo(title, songDuration);
+                        song.setSongID(songid);
                         song.setSongPath(path);
                         songs.add(song);
                     }
@@ -145,4 +204,137 @@ public class MainActivity extends AppCompatActivity {
         int secondsValue = (duration - (minutesValue * 60 * 1000)) / 1000;
         return minutesValue+":"+secondsValue;
     }
+
+    //set the controller up
+    private void setController(){
+        controller = new MusicController(this);
+        //set previous and next button listeners
+        controller.setPrevNextListeners(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playNext();
+            }
+        }, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playPrev();
+            }
+        });
+        //set and show
+        controller.setMediaPlayer(this);
+        controller.setAnchorView(findViewById(R.id.anchor));
+        controller.setEnabled(true);
+    }
+
+    private void playNext(){
+        musicSrv.playNext();
+        if(playbackPaused){
+            setController();
+            playbackPaused=false;
+        }
+        controller.show(0);
+    }
+
+    private void playPrev(){
+        musicSrv.playPrev();
+        if(playbackPaused){
+            setController();
+            playbackPaused=false;
+        }
+        controller.show(0);
+    }
+
+    @Override
+    public boolean canPause() {
+        return true;
+    }
+
+    @Override
+    public boolean canSeekBackward() {
+        return true;
+    }
+
+    @Override
+    public boolean canSeekForward() {
+        return true;
+    }
+
+    @Override
+    public int getAudioSessionId() {
+        return 0;
+    }
+
+    @Override
+    public int getBufferPercentage() {
+        return 0;
+    }
+
+    @Override
+    public int getCurrentPosition() {
+        if(musicSrv!=null && musicBound && musicSrv.isPng())
+            return musicSrv.getPosn();
+        else return 0;
+    }
+
+    @Override
+    public int getDuration() {
+        if(musicSrv!=null && musicBound && musicSrv.isPng())
+            return musicSrv.getDur();
+        else return 0;
+    }
+
+    @Override
+    public boolean isPlaying() {
+        if(musicSrv!=null && musicBound)
+            return musicSrv.isPng();
+        return false;
+    }
+
+    @Override
+    public void pause() {
+        playbackPaused=true;
+        musicSrv.pausePlayer();
+    }
+
+    @Override
+    public void seekTo(int pos) {
+        musicSrv.seek(pos);
+    }
+
+    @Override
+    public void start() {
+        musicSrv.go();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if(playIntent==null){
+            Log.v("Tempo", "starting service");
+            playIntent = new Intent(this, MusicService.class);
+            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            startService(playIntent);
+        }
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        paused=true;
+    }
+
+    @Override
+    protected void onStop() {
+        controller.hide();
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        stopService(playIntent);
+        musicSrv=null;
+        Log.v("Tempo", "in onDestroy");
+        super.onDestroy();
+    }
+
 }
