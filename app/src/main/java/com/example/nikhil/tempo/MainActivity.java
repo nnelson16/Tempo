@@ -81,12 +81,10 @@ public class MainActivity extends AppCompatActivity {
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
         String[] projection = {
                 MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.DATA,
-                MediaStore.Audio.Media.DISPLAY_NAME,
                 MediaStore.Audio.Media.DURATION
         };
-        final String sortOrder = MediaStore.Audio.AudioColumns.TITLE + " COLLATE LOCALIZED ASC";
+        final String sortOrder = MediaStore.Audio.AudioColumns.TITLE + " ASC";
         List<String> mp3Files = new ArrayList<>();
 
         Cursor cursor = null;
@@ -98,12 +96,12 @@ public class MainActivity extends AppCompatActivity {
 
                 while( !cursor.isAfterLast() ){
                     String title = cursor.getString(0);
-                    String artist = cursor.getString(1);
-                    String path = cursor.getString(2);
-                    String displayName  = cursor.getString(3);
-                    String songDuration = cursor.getString(4);
+                    String path = cursor.getString(1);
+                    String songDuration = cursor.getString(2);
                     cursor.moveToNext();
                     if(path != null && path.endsWith(".mp3")) {
+                        Log.v("Tempo", title);
+                        Log.v("Tempo", songDuration);
                         mp3Files.add(path);
                     }
                 }
