@@ -1,6 +1,6 @@
 package com.example.nikhil.tempo;
 
-import android.Manifest;
+
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -11,9 +11,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
+import java.lang.Integer;
+import com.example.nikhil.tempo.Models.Song;
 
 import java.util.ArrayList;
-import java.util.List;
+
 
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
@@ -22,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean permissionsGranted = false;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
+    public static ArrayList<Song> songs = new ArrayList<Song>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +32,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         checkAndRequestPermissions();
         initMp3FilesList();
+
+        for (Song s: songs)
+        {
+            Log.v("Tempo", s.getSongArtist() + " " + s.getSongTitle() + " " + s.getSongDuration() + " " + s.getSongDurationMinutesAndSeconds());
+            Log.v("Tempo", s.getSongPath());
+        }
     }
 
     @Override
@@ -76,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private List<String> scanDeviceForMp3Files()
+    private void scanDeviceForMp3Files()
     {
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
         String[] projection = {
@@ -85,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
                 MediaStore.Audio.Media.DURATION
         };
         final String sortOrder = MediaStore.Audio.AudioColumns.TITLE + " ASC";
-        List<String> mp3Files = new ArrayList<>();
+
 
         Cursor cursor = null;
         try {
@@ -100,17 +109,12 @@ public class MainActivity extends AppCompatActivity {
                     String songDuration = cursor.getString(2);
                     cursor.moveToNext();
                     if(path != null && path.endsWith(".mp3")) {
-                        Log.v("Tempo", title);
-                        Log.v("Tempo", songDuration);
-                        mp3Files.add(path);
+                        Song song = parseInfo(title, songDuration);
+                        song.setSongPath(path);
+                        songs.add(song);
                     }
                 }
 
-            }
-
-            // print to see list of mp3 files
-            for( String file : mp3Files) {
-                Log.i("TAG", file);
             }
 
         } catch (Exception e) {
@@ -120,6 +124,25 @@ public class MainActivity extends AppCompatActivity {
                 cursor.close();
             }
         }
-        return mp3Files;
+    }
+
+    private Song parseInfo(String fileName, String duration)
+    {
+        String[] splitInfo = fileName.split("-");
+        Song song = new Song();
+        song.setSongArtist(splitInfo[0]);
+        song.setSongTitle(splitInfo[1]);
+
+        int convertedValue = Integer.parseInt(duration);
+        song.setSongDuration(convertedValue);
+        song.setSongDurationMinutesAndSeconds(parseDuration(convertedValue));
+        return song;
+    }
+
+    private String parseDuration(int duration)
+    {
+        int minutesValue = (duration / 1000) / 60;
+        int secondsValue = (duration - (minutesValue * 60 * 1000)) / 1000;
+        return minutesValue+":"+secondsValue;
     }
 }
