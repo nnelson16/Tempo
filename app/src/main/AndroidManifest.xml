@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
 
     <application
         android:allowBackup="true"
@@ -25,6 +26,8 @@
         <service android:name="com.example.nikhil.tempo.Services.MusicService"
             android:enabled="true"
             android:exported="true"/>
+
+        <service android:name=".Services.ActivityRecognitionService" />
     </application>
 
 </manifest>

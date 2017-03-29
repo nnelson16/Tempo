@@ -1,6 +1,7 @@
 package com.example.nikhil.tempo;
 
 
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.IBinder;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -21,8 +24,13 @@ import android.widget.Toast;
 import java.lang.Integer;
 import com.example.nikhil.tempo.Models.Song;
 import com.example.nikhil.tempo.MusicController.MusicController;
+import com.example.nikhil.tempo.Services.ActivityRecognitionService;
 import com.example.nikhil.tempo.Services.MusicService;
 import com.example.nikhil.tempo.Services.MusicService.MusicBinder;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.ActivityRecognition;
+
 import android.widget.MediaController.MediaPlayerControl;
 
 import java.util.ArrayList;
@@ -32,7 +40,7 @@ import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.R.id.list;
 
-public class MainActivity extends AppCompatActivity implements MediaPlayerControl{
+public class MainActivity extends AppCompatActivity implements MediaPlayerControl, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
     private boolean permissionsGranted = false;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
@@ -50,6 +58,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     //activity and playback pause flags
     private boolean paused=false, playbackPaused=false;
 
+    private GoogleApiClient googleApiClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,6 +75,12 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         });
         initMp3FilesList();
         setController();
+        googleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(ActivityRecognition.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+        googleApiClient.connect();
     }
 
     //connect to the service
@@ -89,6 +105,23 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             musicBound = false;
         }
     };
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Intent intent = new Intent( this, ActivityRecognitionService.class );
+        PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates( googleApiClient, 10000, pendingIntent);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
 
     @Override
     public void onResume()
