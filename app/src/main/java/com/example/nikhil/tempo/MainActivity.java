@@ -17,11 +17,13 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 import java.lang.Integer;
+import com.google.android.gms.common.api.ResultCallback;
 import com.example.nikhil.tempo.Models.Song;
 import com.example.nikhil.tempo.MusicController.MusicController;
 import com.example.nikhil.tempo.Services.ActivityRecognitionService;
@@ -29,13 +31,19 @@ import com.example.nikhil.tempo.Services.MusicService;
 import com.example.nikhil.tempo.Services.MusicService.MusicBinder;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.places.PlaceLikelihood;
+import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
+import com.google.android.gms.location.places.Places;
 
 import android.widget.MediaController.MediaPlayerControl;
 
 import java.util.ArrayList;
 
 
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.R.id.list;
@@ -73,14 +81,20 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 controller.show(5000);
             }
         });
+
         initMp3FilesList();
         setController();
+
+
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
+                .addApi( Places.GEO_DATA_API )
+                .addApi( Places.PLACE_DETECTION_API )
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
         googleApiClient.connect();
+        guessCurrentPlace();
     }
 
     //connect to the service
@@ -150,9 +164,11 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     public void checkAndRequestPermissions() {
         int readExtResult = ContextCompat.checkSelfPermission(getApplicationContext(), READ_EXTERNAL_STORAGE);
         int writeExtResult = ContextCompat.checkSelfPermission(getApplicationContext(), WRITE_EXTERNAL_STORAGE);
+        int locationFineResult = ContextCompat.checkSelfPermission(getApplicationContext(), ACCESS_FINE_LOCATION);
+        int locationCoarseResult = ContextCompat.checkSelfPermission(getApplicationContext(), ACCESS_COARSE_LOCATION);
 
-        if ((readExtResult != PackageManager.PERMISSION_GRANTED) || (writeExtResult != PackageManager.PERMISSION_GRANTED)) {
-            ActivityCompat.requestPermissions(this, new String[]{READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_CODE);
+        if ((readExtResult != PackageManager.PERMISSION_GRANTED) || (writeExtResult != PackageManager.PERMISSION_GRANTED) || (locationFineResult != PackageManager.PERMISSION_GRANTED) || (locationCoarseResult != PackageManager.PERMISSION_GRANTED)) {
+            ActivityCompat.requestPermissions(this, new String[]{READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION}, PERMISSIONS_REQUEST_CODE);
         } else {
             permissionsGranted = true;
         }
@@ -161,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         if (requestCode == PERMISSIONS_REQUEST_CODE) {
-            if (grantResults.length == 2 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED)
+            if (grantResults.length == 4 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED && grantResults[3] == PackageManager.PERMISSION_GRANTED)
             {
                 Toast.makeText(getApplicationContext(), "Tempo Permissions are granted!", Toast.LENGTH_SHORT).show();
                 permissionsGranted = true;
@@ -215,6 +231,30 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             if( cursor != null){
                 cursor.close();
             }
+        }
+    }
+
+    private void guessCurrentPlace()
+    {
+
+        try
+        {
+            PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi.getCurrentPlace(googleApiClient, null);
+            result.setResultCallback( new ResultCallback<PlaceLikelihoodBuffer>() {
+                @Override
+                public void onResult( PlaceLikelihoodBuffer likelyPlaces ) {
+
+                    for(PlaceLikelihood p : likelyPlaces)
+                    {
+                        Log.v("Tempo", p.getPlace().getName().toString() + " " + ( p.getLikelihood() * 100));
+                    }
+                    likelyPlaces.release();
+                }
+            });
+        }
+        catch(SecurityException se)
+        {
+            Log.e("Tempo", se.getLocalizedMessage());
         }
     }
 
@@ -359,6 +399,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     @Override
     protected void onStop() {
         controller.hide();
+        googleApiClient.disconnect();
         super.onStop();
     }
 
