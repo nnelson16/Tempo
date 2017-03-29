@@ -23,6 +23,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 import java.lang.Integer;
+
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.example.nikhil.tempo.ApplicationController.ApplicationController;
 import com.google.android.gms.common.api.ResultCallback;
 import com.example.nikhil.tempo.Models.Song;
 import com.example.nikhil.tempo.MusicController.MusicController;
@@ -39,6 +45,10 @@ import com.google.android.gms.location.places.Places;
 
 import android.widget.MediaController.MediaPlayerControl;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 
@@ -46,7 +56,7 @@ import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
-import static android.R.id.list;
+
 
 public class MainActivity extends AppCompatActivity implements MediaPlayerControl, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
@@ -67,6 +77,9 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     private boolean paused=false, playbackPaused=false;
 
     private GoogleApiClient googleApiClient;
+    private boolean placeClicked = false;
+    private double currentLatitude;
+    private double currentLongitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +95,55 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             }
         });
 
+        Button button1 = (Button) findViewById(R.id.place_button);
+        button1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                guessCurrentPlace();
+                placeClicked = true;
+            }
+        });
+
+
+        Button button2 = (Button) findViewById(R.id.weather_button);
+        button2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(placeClicked)
+                {
+
+                    final String URL = "http://api.wunderground.com/api/663639f0328f1895/conditions/q/"+currentLatitude+","+currentLongitude+".json";
+                    JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                            (Request.Method.GET, URL, null, new Response.Listener<JSONObject>() {
+
+                                @Override
+                                public void onResponse(JSONObject response) {
+                                    try
+                                    {
+                                        Log.v("Tempo", "Response: "+response.toString(4));
+                                    }
+                                   catch(Exception e)
+                                   {
+                                       Log.e("Tempo", e.toString());
+                                   }
+                                }
+                            }, new Response.ErrorListener() {
+
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    // TODO Auto-generated method stub
+
+                                }
+                            });
+                    ApplicationController.requestQueue.add(jsObjRequest);
+                    placeClicked = false;
+                }
+                else
+                {
+                    Toast.makeText(getApplicationContext(), "Need to know your place first", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
         initMp3FilesList();
         setController();
 
@@ -94,7 +156,6 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 .addOnConnectionFailedListener(this)
                 .build();
         googleApiClient.connect();
-        guessCurrentPlace();
     }
 
     //connect to the service
@@ -239,6 +300,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
         try
         {
+            final int count = 0;
             PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi.getCurrentPlace(googleApiClient, null);
             result.setResultCallback( new ResultCallback<PlaceLikelihoodBuffer>() {
                 @Override
@@ -246,6 +308,11 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
                     for(PlaceLikelihood p : likelyPlaces)
                     {
+                        if(count == 0)
+                        {
+                            currentLatitude = p.getPlace().getLatLng().latitude;
+                            currentLongitude = p.getPlace().getLatLng().longitude;
+                        }
                         Log.v("Tempo", p.getPlace().getName().toString() + " " + ( p.getLikelihood() * 100));
                     }
                     likelyPlaces.release();
