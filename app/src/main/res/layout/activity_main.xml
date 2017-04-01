@@ -6,7 +6,20 @@
     android:layout_height="match_parent"
     android:id="@+id/anchor"
     android:orientation="vertical"
+    android:background="@drawable/background_gradient"
     tools:context="com.example.nikhil.tempo.MainActivity">
+
+    <TextView
+        android:id="@+id/appNameTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:paddingBottom="16sp"
+        android:paddingLeft="16sp"
+        android:paddingTop="16sp"
+        android:text="Tempo"
+        android:textColor="@android:color/white"
+        android:textSize="20sp" />
 
     <Button
         android:layout_width="wrap_content"

@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.Toast;
 import java.lang.Integer;
@@ -84,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
         checkAndRequestPermissions();
         Button button = (Button) findViewById(R.id.trigger_button);
@@ -260,14 +262,15 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 MediaStore.Audio.Media.DATA,
                 MediaStore.Audio.Media.DURATION
         };
+
         final String sortOrder = MediaStore.Audio.AudioColumns.TITLE + " ASC";
 
-
         Cursor cursor = null;
+
         try {
             Uri uri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             cursor = getContentResolver().query(uri, projection, selection, null, sortOrder);
-            if( cursor != null){
+            if( cursor != null ){
                 cursor.moveToFirst();
 
 
@@ -276,9 +279,11 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                     String title = cursor.getString(1);
                     String path = cursor.getString(2);
                     String songDuration = cursor.getString(3);
+
                     cursor.moveToNext();
                     if(path != null && path.endsWith(".mp3")) {
                         Song song = parseInfo(title, songDuration);
+                        System.out.println(song.getSongTitle());
                         song.setSongID(songid);
                         song.setSongPath(path);
                         songs.add(song);
@@ -286,7 +291,6 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 }
 
             }
-
         } catch (Exception e) {
             Log.e("TAG", e.toString());
         }finally{
@@ -328,10 +332,10 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     private Song parseInfo(String fileName, String duration)
     {
-        String[] splitInfo = fileName.split("-");
+        //String[] splitInfo = fileName.split(" ");
         Song song = new Song();
-        song.setSongArtist(splitInfo[0]);
-        song.setSongTitle(splitInfo[1]);
+        song.setSongArtist(fileName);
+        song.setSongTitle(fileName);
 
         int convertedValue = Integer.parseInt(duration);
         song.setSongDuration(convertedValue);
