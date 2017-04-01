@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             @Override
             public void onClick(View v) {
                 musicSrv.playSong();
-                controller.show(5000);
+                controller.show();
             }
         });
 
@@ -185,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     public void onConnected(@Nullable Bundle bundle) {
         Intent intent = new Intent( this, ActivityRecognitionService.class );
         PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates( googleApiClient, 10000, pendingIntent);
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(googleApiClient, 5000, pendingIntent);
     }
 
     @Override
@@ -269,6 +269,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             cursor = getContentResolver().query(uri, projection, selection, null, sortOrder);
             if( cursor != null){
                 cursor.moveToFirst();
+
 
                 while( !cursor.isAfterLast() ){
                     int songid = cursor.getInt(0);
@@ -452,7 +453,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         if(playIntent==null){
             Log.v("Tempo", "starting service");
             playIntent = new Intent(this, MusicService.class);
-            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            getApplicationContext().bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
             startService(playIntent);
         }
     }
@@ -460,6 +461,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     @Override
     protected void onPause(){
         super.onPause();
+        controller.hide();
         paused=true;
     }
 
@@ -472,7 +474,9 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     @Override
     protected void onDestroy() {
+        musicBound = false;
         stopService(playIntent);
+        getApplicationContext().unbindService(musicConnection);
         musicSrv=null;
         Log.v("Tempo", "in onDestroy");
         super.onDestroy();
