@@ -227,7 +227,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         }
         else if(placeTypes.contains(Place.TYPE_GYM) || activityLabel.equalsIgnoreCase("RUNNING") || activityLabel.equalsIgnoreCase("ON_BICYCLE"))
         {
-            return "gym%2Fmotivational";
+            return "exercise";
         }
         else if(activityLabel.equalsIgnoreCase("STILL"))
         {
