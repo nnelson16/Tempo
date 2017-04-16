@@ -15,6 +15,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -40,6 +41,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceLikelihood;
 import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.location.places.Places;
@@ -51,19 +53,23 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.TimeZone;
 
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
 
 
 public class MainActivity extends AppCompatActivity implements MediaPlayerControl, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
     private boolean permissionsGranted = false;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
-    public static ArrayList<Song> songs = new ArrayList<Song>();
+    public static ArrayList<JSONObject> songs = new ArrayList<JSONObject>();
 
     //service
     private MusicService musicSrv;
@@ -81,6 +87,16 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     private boolean placeClicked = false;
     private double currentLatitude;
     private double currentLongitude;
+    private JSONObject weatherResponse = null;
+    public static String activityLabel = "";
+    private String weatherLabel = "";
+    private List<Integer> placeTypes = null;
+    private String activityInput = "";
+    private String weatherInput = "";
+    private String moodInput = "excited";
+    private SwipeRefreshLayout swipeRefreshLayout;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                musicSrv.playSong();
+                musicSrv.playSong(false);
                 controller.show();
             }
         });
@@ -101,52 +117,10 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                guessCurrentPlace();
+                gatherData();
                 placeClicked = true;
             }
         });
-
-
-        Button button2 = (Button) findViewById(R.id.weather_button);
-        button2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(placeClicked)
-                {
-
-                    final String URL = "http://api.wunderground.com/api/663639f0328f1895/conditions/q/"+currentLatitude+","+currentLongitude+".json";
-                    JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                            (Request.Method.GET, URL, null, new Response.Listener<JSONObject>() {
-
-                                @Override
-                                public void onResponse(JSONObject response) {
-                                    try
-                                    {
-                                        Log.v("Tempo", "Response: "+response.toString(4));
-                                    }
-                                   catch(Exception e)
-                                   {
-                                       Log.e("Tempo", e.toString());
-                                   }
-                                }
-                            }, new Response.ErrorListener() {
-
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    // TODO Auto-generated method stub
-
-                                }
-                            });
-                    ApplicationController.requestQueue.add(jsObjRequest);
-                    placeClicked = false;
-                }
-                else
-                {
-                    Toast.makeText(getApplicationContext(), "Need to know your place first", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-        initMp3FilesList();
         setController();
 
 
@@ -158,6 +132,16 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 .addOnConnectionFailedListener(this)
                 .build();
         googleApiClient.connect();
+
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                controller.hide();
+                gatherData();
+                musicSrv.playSong(true);
+            }
+        });
     }
 
     //connect to the service
@@ -186,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Intent intent = new Intent( this, ActivityRecognitionService.class );
-        PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
         ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(googleApiClient, 5000, pendingIntent);
     }
 
@@ -204,11 +188,6 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     public void onResume()
     {
         super.onResume();
-        if(permissionsGranted)
-        {
-            scanDeviceForMp3Files();
-        }
-
         if(paused)
         {
             setController();
@@ -216,13 +195,55 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         }
     }
 
-    public void initMp3FilesList()
+    public void gatherData()
     {
-        if(permissionsGranted)
+        Intent intent = new Intent(getApplicationContext(), ActivityRecognitionService.class );
+        PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), 0, intent, PendingIntent.FLAG_ONE_SHOT);
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(googleApiClient, 5000, pendingIntent);
+        guessCurrentPlaceAndWeather();
+    }
+
+
+    public String getWeatherInput()
+    {
+        if(weatherLabel.contains("Flurries") || weatherLabel.contains("Snow") || weatherLabel.contains("Freezing") || weatherLabel.contains("Sleet"))
         {
-            scanDeviceForMp3Files();
+            return "snowy";
+        }
+        else if(weatherLabel.contains("Rain") || weatherLabel.contains("Thunderstorm"))
+        {
+            return "rainy";
+        }
+        else if(weatherLabel.contains("Cloud") || weatherLabel.contains("Overcast") || weatherLabel.contains("Fog") || weatherLabel.contains("Haze"))
+        {
+            return "cold";
+        }
+        else
+        {
+            return "sunny";
         }
     }
+
+    public String getActivityInput()
+    {
+        if (placeTypes.contains(Place.TYPE_NIGHT_CLUB))
+        {
+            return "party";
+        }
+        else if(placeTypes.contains(Place.TYPE_GYM) || activityLabel.equalsIgnoreCase("RUNNING") || activityLabel.equalsIgnoreCase("ON_BICYCLE"))
+        {
+            return "gym%2Fmotivational";
+        }
+        else if(activityLabel.equalsIgnoreCase("STILL"))
+        {
+            return "focused";
+        }
+        else
+        {
+            return "daily";
+        }
+    }
+
 
     public void checkAndRequestPermissions() {
         int readExtResult = ContextCompat.checkSelfPermission(getApplicationContext(), READ_EXTERNAL_STORAGE);
@@ -253,63 +274,50 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         }
     }
 
-    private void scanDeviceForMp3Files()
+    private void makeWeatherRequest()
     {
-        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
-        String[] projection = {
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.DATA,
-                MediaStore.Audio.Media.DURATION
-        };
 
-        final String sortOrder = MediaStore.Audio.AudioColumns.TITLE + " ASC";
+        String URL = "http://api.wunderground.com/api/663639f0328f1895/conditions/q/"+currentLatitude+","+currentLongitude+".json";
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, URL, null, new Response.Listener<JSONObject>() {
 
-        Cursor cursor = null;
-
-        try {
-            Uri uri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-            cursor = getContentResolver().query(uri, projection, selection, null, sortOrder);
-            if( cursor != null ){
-                cursor.moveToFirst();
-
-
-                while( !cursor.isAfterLast() ){
-                    int songid = cursor.getInt(0);
-                    String title = cursor.getString(1);
-                    String path = cursor.getString(2);
-                    String songDuration = cursor.getString(3);
-
-                    cursor.moveToNext();
-                    if(path != null && path.endsWith(".mp3")) {
-                        Song song = parseInfo(title, songDuration);
-                        System.out.println(song.getSongTitle());
-                        song.setSongID(songid);
-                        song.setSongPath(path);
-                        songs.add(song);
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try
+                        {
+                            weatherResponse = response;
+                            weatherLabel = weatherResponse.getJSONObject("current_observation").getString("weather");
+                            activityInput = getActivityInput();
+                            weatherInput = getWeatherInput();
+                            makeSongRequest();
+                            Log.v("Tempo", response.toString(4));
+                        }
+                        catch(Exception e)
+                        {
+                            Log.e("Tempo", e.toString());
+                        }
                     }
-                }
+                }, new Response.ErrorListener() {
 
-            }
-        } catch (Exception e) {
-            Log.e("TAG", e.toString());
-        }finally{
-            if( cursor != null){
-                cursor.close();
-            }
-        }
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO Auto-generated method stub
+
+                    }
+                });
+        ApplicationController.requestQueue.add(jsObjRequest);
     }
 
-    private void guessCurrentPlace()
+    private void guessCurrentPlaceAndWeather()
     {
 
         try
         {
-            final int count = 0;
             PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi.getCurrentPlace(googleApiClient, null);
             result.setResultCallback( new ResultCallback<PlaceLikelihoodBuffer>() {
                 @Override
                 public void onResult( PlaceLikelihoodBuffer likelyPlaces ) {
+                    int count = 0;
 
                     for(PlaceLikelihood p : likelyPlaces)
                     {
@@ -317,8 +325,12 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                         {
                             currentLatitude = p.getPlace().getLatLng().latitude;
                             currentLongitude = p.getPlace().getLatLng().longitude;
+                            placeTypes = p.getPlace().getPlaceTypes();
+                            makeWeatherRequest();
+                            count = count + 1;
+                            Log.v("Tempo", p.getPlace().getName().toString() + " " + ( p.getLikelihood() * 100));
                         }
-                        Log.v("Tempo", p.getPlace().getName().toString() + " " + ( p.getLikelihood() * 100));
+
                     }
                     likelyPlaces.release();
                 }
@@ -330,24 +342,43 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         }
     }
 
-    private Song parseInfo(String fileName, String duration)
+    private void makeSongRequest()
     {
-        //String[] splitInfo = fileName.split(" ");
-        Song song = new Song();
-        song.setSongArtist(fileName);
-        song.setSongTitle(fileName);
+        //String URL = "http://ec2-34-207-226-52.compute-1.amazonaws.com/users/1/recommendations?weather="+weatherInput+"&activity="+activityInput+"&mood="+moodInput;
+        String URL = "http://ec2-34-207-226-52.compute-1.amazonaws.com/users/1/recommendations?weather="+weatherInput+"&activity=daily"+"&mood="+moodInput;
+        Log.v("Tempo song request", URL);
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, URL, null, new Response.Listener<JSONObject>() {
 
-        int convertedValue = Integer.parseInt(duration);
-        song.setSongDuration(convertedValue);
-        song.setSongDurationMinutesAndSeconds(parseDuration(convertedValue));
-        return song;
-    }
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try
+                        {
+                            songs.clear();
+                            JSONArray songsArray = response.getJSONArray("songs");
+                            for(int i=0; i<songsArray.length(); i++)
+                            {
+                                songs.add(songsArray.getJSONObject(i));
+                            }
+                            musicSrv.setList(songs);
+                            swipeRefreshLayout.setRefreshing(false);
+                            Toast.makeText(getApplicationContext(), "Your Songs Have Arrived!", Toast.LENGTH_SHORT).show();
+                            Log.v("Tempo", response.toString(4));
+                        }
+                        catch(Exception e)
+                        {
+                            Log.e("Tempo", e.toString());
+                        }
+                    }
+                }, new Response.ErrorListener() {
 
-    private String parseDuration(int duration)
-    {
-        int minutesValue = (duration / 1000) / 60;
-        int secondsValue = (duration - (minutesValue * 60 * 1000)) / 1000;
-        return minutesValue+":"+secondsValue;
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO Auto-generated method stub
+
+                    }
+                });
+        ApplicationController.requestQueue.add(jsObjRequest);
     }
 
     //set the controller up

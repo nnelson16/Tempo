@@ -17,6 +17,8 @@ import com.example.nikhil.tempo.MainActivity;
 import com.example.nikhil.tempo.Models.Song;
 import com.example.nikhil.tempo.R;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -29,7 +31,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     //media player
     private MediaPlayer player;
     //song list
-    private ArrayList<Song> songs;
+    private ArrayList<JSONObject> songs;
     //current position
     private int songPosn;
     //binder
@@ -68,7 +70,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         player.setOnErrorListener(this);
     }
 
-    public void setList(ArrayList<Song> theSongs){
+    public void setList(ArrayList<JSONObject> theSongs){
         songs=theSongs;
     }
 
@@ -94,32 +96,30 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     //play a song
-    public void playSong(){
+    public void playSong(boolean refreshed){
+
+
         //play
         player.reset();
+
+        if(refreshed)
+        {
+            songPosn = 0;
+        }
         //get song
-        Song playSong = songs.get(songPosn);
-
-        //get title
-        songTitle = playSong.getSongTitle();
-
-        //get id
-        long currSong = playSong.getSongID();
-        //set uri
-        Uri trackUri = ContentUris.withAppendedId(
-                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                currSong);
+        JSONObject playSong = songs.get(songPosn);
 
         //set the data source
         try
         {
-            player.setDataSource(getApplicationContext(), trackUri);
+            player.setDataSource(playSong.getString("url"));
         }
         catch(Exception e){
             Log.e("MUSIC SERVICE", "Error setting data source", e);
         }
         Log.v("Tempo", "preparing async");
         player.prepareAsync();
+
     }
 
     @Override
@@ -188,7 +188,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     public void playPrev(){
         songPosn--;
         if(songPosn<0) songPosn=songs.size()-1;
-        playSong();
+        playSong(false);
     }
 
     //skip to next
@@ -196,7 +196,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
         songPosn++;
         if(songPosn>=songs.size()) songPosn=0;
-        playSong();
+        playSong(false);
     }
 
     @Override
