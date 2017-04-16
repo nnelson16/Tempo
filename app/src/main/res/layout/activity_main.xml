@@ -35,22 +35,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/trigger_button"
-                android:text="music"
+                android:text="PLAY"
                 android:layout_gravity="center"/>
 
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/place_button"
-                android:text="place"
-                android:layout_gravity="center"/>
 
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/weather_button"
-                android:text="weather"
-                android:layout_gravity="center"/>
 
         </LinearLayout>
 

@@ -113,14 +113,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             }
         });
 
-        Button button1 = (Button) findViewById(R.id.place_button);
-        button1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                gatherData();
-                placeClicked = true;
-            }
-        });
+
         setController();
 
 
@@ -142,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 musicSrv.playSong(true);
             }
         });
+
     }
 
     //connect to the service
@@ -172,6 +166,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         Intent intent = new Intent( this, ActivityRecognitionService.class );
         PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
         ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(googleApiClient, 5000, pendingIntent);
+        gatherData();
     }
 
     @Override
@@ -345,7 +340,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     private void makeSongRequest()
     {
         //String URL = "http://ec2-34-207-226-52.compute-1.amazonaws.com/users/1/recommendations?weather="+weatherInput+"&activity="+activityInput+"&mood="+moodInput;
-        String URL = "http://ec2-34-207-226-52.compute-1.amazonaws.com/users/1/recommendations?weather="+weatherInput+"&activity=daily"+"&mood="+moodInput;
+        String URL = "http://ec2-34-207-226-52.compute-1.amazonaws.com/users/1/recommendations?weather=sunny"+"&activity=daily"+"&mood="+moodInput;
         Log.v("Tempo song request", URL);
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, URL, null, new Response.Listener<JSONObject>() {
