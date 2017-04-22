@@ -23,6 +23,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import java.lang.Integer;
 
@@ -70,6 +71,10 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     private boolean permissionsGranted = false;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
     public static ArrayList<JSONObject> songs = new ArrayList<JSONObject>();
+
+    public TextView weatherText;
+    public TextView activityText;
+    public TextView locationText;
 
     //service
     private MusicService musicSrv;
@@ -284,6 +289,10 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                             weatherLabel = weatherResponse.getJSONObject("current_observation").getString("weather");
                             activityInput = getActivityInput();
                             weatherInput = getWeatherInput();
+                            weatherText = (TextView) findViewById(R.id.weatherText);
+                            weatherText.setText(weatherInput);
+                            activityText = (TextView) findViewById(R.id.activityText);
+                            activityText.setText(activityInput);
                             makeSongRequest();
                             Log.v("Tempo", response.toString(4));
                         }
@@ -323,6 +332,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                             placeTypes = p.getPlace().getPlaceTypes();
                             makeWeatherRequest();
                             count = count + 1;
+                            locationText = (TextView) findViewById(R.id.locationText);
+                            locationText.setText(p.getPlace().getName().toString());
                             Log.v("Tempo", p.getPlace().getName().toString() + " " + ( p.getLikelihood() * 100));
                         }
 

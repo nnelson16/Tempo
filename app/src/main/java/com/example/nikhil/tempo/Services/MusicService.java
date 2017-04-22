@@ -16,6 +16,8 @@ import android.util.Log;
 import com.example.nikhil.tempo.MainActivity;
 import com.example.nikhil.tempo.Models.Song;
 import com.example.nikhil.tempo.R;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.ExoPlayerFactory;
 
 import org.json.JSONObject;
 
@@ -30,6 +32,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 {
     //media player
     private MediaPlayer player;
+    private ExoPlayer exoPlayer;
+    private ExoPlayerFactory exoPlayerFactory;
     //song list
     private ArrayList<JSONObject> songs;
     //current position
