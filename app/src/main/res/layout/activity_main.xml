@@ -21,6 +21,59 @@
         android:textColor="@android:color/white"
         android:textSize="20sp" />
 
+    <TextView
+        android:id="@+id/editText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="21dp"
+        android:paddingBottom="5sp"
+        android:paddingLeft="16sp"
+        android:inputType="textPersonName"
+        android:text="We detect" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="25dp"
+            android:paddingRight="25dp"
+            android:textSize="21dp"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:id="@+id/weatherText"
+            android:text="weather" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="25dp"
+            android:paddingRight="25dp"
+            android:textSize="21dp"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:id="@+id/activityText"
+            android:text="activity" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="25dp"
+            android:paddingRight="25dp"
+            android:textSize="18dp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:id="@+id/locationText"
+            android:text="location" />
+
+    </LinearLayout>
+
+
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
@@ -31,21 +84,25 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
+            <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="300dp"
+                android:layout_height="300dp"
+                android:layout_marginTop="25dp"
+                android:layout_marginBottom="10dp"
+                android:layout_gravity="center"
+                app:srcCompat="@drawable/default_album_art" />
+
             <Button
+                android:id="@+id/trigger_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/trigger_button"
-                android:text="PLAY"
-                android:layout_gravity="center"/>
-
-
+                android:layout_gravity="center"
+                android:text="PLAY" />
 
         </LinearLayout>
 
     </android.support.v4.widget.SwipeRefreshLayout>
-
-
-
 
 
 </LinearLayout>
