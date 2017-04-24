@@ -403,8 +403,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     private void makeSongRequest()
     {
-        //String URL = "http://ec2-54-242-27-140.compute-1.amazonaws.com/users/1/recommendations?weather="+weatherInput+"&activity="+activityInput+"&mood="+moodInput;
-        String URL = "http://ec2-54-242-27-140.compute-1.amazonaws.com/users/1/recommendations?weather=sunny"+"&activity=daily"+"&mood="+moodInput;
+        String URL = "http://ec2-54-242-27-140.compute-1.amazonaws.com/users/1/recommendations?weather="+weatherInput+"&activity="+activityInput+"&mood="+moodInput;
+        //String URL = "http://ec2-54-242-27-140.compute-1.amazonaws.com/users/1/recommendations?weather=sunny"+"&activity=daily"+"&mood="+moodInput;
         Log.v("Tempo song request", URL);
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, URL, null, new Response.Listener<JSONObject>() {
