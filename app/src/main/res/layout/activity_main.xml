@@ -9,17 +9,43 @@
     android:background="@drawable/background_gradient"
     tools:context="com.example.nikhil.tempo.MainActivity">
 
-    <TextView
-        android:id="@+id/appNameTextView"
-        android:layout_width="match_parent"
+
+    <LinearLayout
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-medium"
-        android:paddingBottom="16sp"
-        android:paddingLeft="16sp"
-        android:paddingTop="16sp"
-        android:text="Tempo"
-        android:textColor="@android:color/white"
-        android:textSize="20sp" />
+        android:orientation="horizontal"
+        android:weightSum="1">
+
+        <TextView
+            android:id="@+id/appNameTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.7"
+            android:layout_gravity="left"
+            android:fontFamily="sans-serif-medium"
+            android:paddingBottom="16sp"
+            android:paddingLeft="16sp"
+            android:paddingTop="16sp"
+            android:text="Tempo"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="20sp" />
+
+        <Switch
+            android:id="@+id/moodSwitch"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="right"
+            android:layout_weight="0.3"
+            android:paddingRight="12dp"
+            android:text="Mood"
+            android:textAlignment="center"
+            android:textOff="sad"
+            android:textOn="excited"
+            android:thumb="@drawable/excited"
+            android:trackTint="@android:color/black" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/editText"
@@ -74,7 +100,6 @@
 
     </LinearLayout>
 
-
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
@@ -100,6 +125,25 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:text="PLAY" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="#fff"
+                android:text="Song Name"
+                android:textSize="18dp"
+                android:textStyle="bold"
+                android:id="@+id/songText" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Artist Name"
+                android:textColor="#fff"
+                android:textSize="14dp"
+                android:id="@+id/artistText" />
 
             <Button
                 android:layout_width="wrap_content"
