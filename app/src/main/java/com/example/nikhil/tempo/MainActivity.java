@@ -26,6 +26,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -94,6 +95,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     TextView artistName;
     MediaMetadataRetriever metaData;
 
+    Switch mood;
+
     //service
     private MusicService musicSrv;
     private Intent playIntent;
@@ -150,9 +153,21 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             }
         });
 
+        mood = (Switch) findViewById(R.id.moodSwitch);
+        mood.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(mood.isChecked()) {
+                    moodInput = mood.getTextOn().toString();
+                    System.out.println("MOODON: " + moodInput);
+                } else {
+                    moodInput = mood.getTextOff().toString();
+                    System.out.println("MOODOFF: " + moodInput);
+                }
+            }
+        });
 
         setController();
-
 
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
@@ -172,7 +187,6 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 musicSrv.playSong(true);
             }
         });
-
     }
 
     //connect to the service
@@ -318,12 +332,14 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                         {
                             weatherResponse = response;
                             weatherLabel = weatherResponse.getJSONObject("current_observation").getString("weather");
+
                             activityInput = getActivityInput();
                             weatherInput = getWeatherInput();
                             weatherText = (TextView) findViewById(R.id.weatherText);
                             weatherText.setText(weatherInput);
                             activityText = (TextView) findViewById(R.id.activityText);
                             activityText.setText(activityInput);
+
                             makeSongRequest();
                             Log.v("Tempo", response.toString(4));
                         }
