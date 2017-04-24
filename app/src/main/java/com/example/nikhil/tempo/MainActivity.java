@@ -684,6 +684,9 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             Log.e("Debug", "error: " + ioe.getMessage(), ioe);
         }
 
+
+        /*
+
         //------------------ read the SERVER RESPONSE
         try {
 
@@ -702,6 +705,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             Log.v("Tempo", "Exception Happened Here");
             Log.e("Debug", "error: " + ioex.getMessage(), ioex);
         }
+        */
     }
 
 }
