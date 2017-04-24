@@ -40,6 +40,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.example.nikhil.tempo.ApplicationController.ApplicationController;
 import com.google.android.gms.common.api.ResultCallback;
 import com.example.nikhil.tempo.Models.Song;
@@ -114,6 +115,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     private String moodInput = "excited";
     private SwipeRefreshLayout swipeRefreshLayout;
     private int uploadIndex = 0;
+    private AsyncTask<Void, Void, Void> songUploadTask = null;
 
 
 
@@ -129,7 +131,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new SongUploadTask().execute();
+                songUploadTask = new SongUploadTask();
+                songUploadTask.execute();
             }
         });
         
@@ -543,6 +546,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         stopService(playIntent);
         getApplicationContext().unbindService(musicConnection);
         musicSrv=null;
+        songUploadTask.cancel(true);
         Log.v("Tempo", "in onDestroy");
         super.onDestroy();
     }
@@ -611,7 +615,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             uploadIndex = uploadIndex + 1;
             if(uploadIndex != localSongsList.size())
             {
-                new SongUploadTask().execute();
+                songUploadTask.execute();
             }
         }
     }
@@ -684,6 +688,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             Log.e("Debug", "error: " + ioe.getMessage(), ioe);
         }
 
+
+        
 
         /*
 
