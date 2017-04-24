@@ -120,9 +120,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     private List<String> localSongsList = null;
     private String activityInput = "";
     private String weatherInput = "";
-    private String moodInput = "excited";
+    private String moodInput = "";
     private SwipeRefreshLayout swipeRefreshLayout;
-    private int uploadIndex = 0;
     private AsyncTask<Void, Integer, Void> songUploadTask = null;
 
 
@@ -154,16 +153,12 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         });
 
         mood = (Switch) findViewById(R.id.moodSwitch);
+        getMoodInput();
         mood.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(mood.isChecked()) {
-                    moodInput = mood.getTextOn().toString();
-                    System.out.println("MOODON: " + moodInput);
-                } else {
-                    moodInput = mood.getTextOff().toString();
-                    System.out.println("MOODOFF: " + moodInput);
-                }
+                getMoodInput();
+                gatherData();
             }
         });
 
@@ -211,6 +206,17 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             musicBound = false;
         }
     };
+
+    private void getMoodInput()
+    {
+        if(mood.isChecked()) {
+            moodInput = mood.getTextOn().toString();
+            System.out.println("MOODON: " + moodInput);
+        } else {
+            moodInput = mood.getTextOff().toString();
+            System.out.println("MOODOFF: " + moodInput);
+        }
+    }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
