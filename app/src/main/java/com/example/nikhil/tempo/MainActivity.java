@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     private String moodInput = "excited";
     private SwipeRefreshLayout swipeRefreshLayout;
     private int uploadIndex = 0;
-    private AsyncTask<Void, Void, Void> songUploadTask = null;
+    private AsyncTask<Void, Integer, Void> songUploadTask = null;
 
 
 
@@ -261,7 +261,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         {
             return "exercise";
         }
-        else if(activityLabel.equalsIgnoreCase("STILL"))
+        else if(activityLabel.equalsIgnoreCase("STILL") && (placeTypes.contains(Place.TYPE_UNIVERSITY) || placeTypes.contains(Place.TYPE_LIBRARY)))
         {
             return "focused";
         }
@@ -377,7 +377,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     private void makeSongRequest()
     {
-        //String URL = "http://ec2-34-207-226-52.compute-1.amazonaws.com/users/1/recommendations?weather="+weatherInput+"&activity="+activityInput+"&mood="+moodInput;
+        //String URL = "http://ec2-54-242-27-140.compute-1.amazonaws.com/users/1/recommendations?weather="+weatherInput+"&activity="+activityInput+"&mood="+moodInput;
         String URL = "http://ec2-54-242-27-140.compute-1.amazonaws.com/users/1/recommendations?weather=sunny"+"&activity=daily"+"&mood="+moodInput;
         Log.v("Tempo song request", URL);
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
@@ -595,37 +595,42 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         return mp3Files;
     }
 
-    private class SongUploadTask extends AsyncTask<Void, Void, Void>
+    private class SongUploadTask extends AsyncTask<Void, Integer, Void>
     {
         @Override
         protected Void doInBackground(Void... params)
         {
-            if(uploadIndex != localSongsList.size())
+            int songCount = 0;
+            for (String fileName : localSongsList)
             {
-                doFileUpload();
+                doFileUpload(fileName);
+                songCount = songCount + 1;
             }
+            publishProgress(songCount);
             return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values)
+        {
+            Toast.makeText(getApplicationContext(), values[0] + "/" + localSongsList.size() + " songs have been uploaded", Toast.LENGTH_SHORT).show();
         }
 
         @Override
         protected void onPostExecute(Void aVoid)
         {
-            int songNum = uploadIndex + 1;
-            Toast.makeText(getApplicationContext(), "Uploaded: "+songNum + "/" + localSongsList.size() + "songs", Toast.LENGTH_SHORT).show();
-            uploadIndex = uploadIndex + 1;
-            if(uploadIndex != localSongsList.size())
-            {
-                songUploadTask.execute();
-            }
+
+            Toast.makeText(getApplicationContext(), "All songs have been uploaded!", Toast.LENGTH_SHORT).show();
+
         }
     }
 
-    private void doFileUpload() {
+    private void doFileUpload(String fileName) {
 
         HttpURLConnection conn = null;
         DataOutputStream dos = null;
         DataInputStream inStream = null;
-        String existingFileName = localSongsList.get(uploadIndex);
+        String existingFileName = fileName;
         Log.v("Tempo", "Song Path: "+existingFileName);
         String lineEnd = "\r\n";
         String twoHyphens = "--";
