@@ -34,6 +34,7 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:layout_gravity="center_horizontal">
 
         <TextView
@@ -117,6 +118,13 @@
                 android:textColor="#fff"
                 android:textSize="14dp"
                 android:id="@+id/artistText" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/Upload"
+                android:text="Upload"
+                android:layout_gravity="center"/>
 
         </LinearLayout>
 
