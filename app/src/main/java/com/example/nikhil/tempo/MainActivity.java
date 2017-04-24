@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -25,6 +26,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -89,6 +91,12 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     public TextView activityText;
     public TextView locationText;
 
+    TextView songName;
+    TextView artistName;
+    MediaMetadataRetriever metaData;
+
+    Switch mood;
+
     //service
     private MusicService musicSrv;
     private Intent playIntent;
@@ -145,9 +153,21 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             }
         });
 
+        mood = (Switch) findViewById(R.id.moodSwitch);
+        mood.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(mood.isChecked()) {
+                    moodInput = mood.getTextOn().toString();
+                    System.out.println("MOODON: " + moodInput);
+                } else {
+                    moodInput = mood.getTextOff().toString();
+                    System.out.println("MOODOFF: " + moodInput);
+                }
+            }
+        });
 
         setController();
-
 
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
@@ -167,7 +187,6 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 musicSrv.playSong(true);
             }
         });
-
     }
 
     //connect to the service
@@ -303,7 +322,6 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     private void makeWeatherRequest()
     {
-
         String URL = "http://api.wunderground.com/api/663639f0328f1895/conditions/q/"+currentLatitude+","+currentLongitude+".json";
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, URL, null, new Response.Listener<JSONObject>() {
@@ -314,12 +332,14 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                         {
                             weatherResponse = response;
                             weatherLabel = weatherResponse.getJSONObject("current_observation").getString("weather");
+
                             activityInput = getActivityInput();
                             weatherInput = getWeatherInput();
                             weatherText = (TextView) findViewById(R.id.weatherText);
                             weatherText.setText(weatherInput);
                             activityText = (TextView) findViewById(R.id.activityText);
                             activityText.setText(activityInput);
+
                             makeSongRequest();
                             Log.v("Tempo", response.toString(4));
                         }

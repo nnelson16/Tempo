@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.ContentUris;
 import android.content.Intent;
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.app.Service;
 import android.net.Uri;
@@ -12,6 +13,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
+import android.widget.TextView;
 
 import com.example.nikhil.tempo.MainActivity;
 import com.example.nikhil.tempo.Models.Song;
@@ -20,6 +22,7 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -32,8 +35,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 {
     //media player
     private MediaPlayer player;
-    private ExoPlayer exoPlayer;
-    private ExoPlayerFactory exoPlayerFactory;
     //song list
     private ArrayList<JSONObject> songs;
     //current position
