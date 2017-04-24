@@ -73,7 +73,6 @@
 
     </LinearLayout>
 
-
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
@@ -99,6 +98,25 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:text="PLAY" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="#fff"
+                android:text="Song Name"
+                android:textSize="18dp"
+                android:textStyle="bold"
+                android:id="@+id/songText" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Artist Name"
+                android:textColor="#fff"
+                android:textSize="14dp"
+                android:id="@+id/artistText" />
 
         </LinearLayout>
 

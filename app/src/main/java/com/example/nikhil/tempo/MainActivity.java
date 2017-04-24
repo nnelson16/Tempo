@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.IBinder;
 import android.provider.MediaStore;
@@ -75,6 +76,10 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     public TextView weatherText;
     public TextView activityText;
     public TextView locationText;
+
+    TextView songName;
+    TextView artistName;
+    MediaMetadataRetriever metaData;
 
     //service
     private MusicService musicSrv;
@@ -276,7 +281,6 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     private void makeWeatherRequest()
     {
-
         String URL = "http://api.wunderground.com/api/663639f0328f1895/conditions/q/"+currentLatitude+","+currentLongitude+".json";
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, URL, null, new Response.Listener<JSONObject>() {
