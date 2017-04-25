@@ -180,6 +180,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             public void onClick(View view) {
                 getMoodInput();
                 gatherData();
+                musicSrv.playSong(true);
+                controller.show();
             }
         });
 
@@ -601,9 +603,13 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         stopService(playIntent);
         getApplicationContext().unbindService(musicConnection);
         musicSrv=null;
-        songUploadTask.cancel(true);
-        conn.disconnect();
-        conn = null;
+        if(songUploadTask != null)
+        {
+            songUploadTask.cancel(true);
+            conn.disconnect();
+            conn = null;
+            Log.v("Tempo", "Songs were uploaded during use");
+        }
         Log.v("Tempo", "in onDestroy");
         super.onDestroy();
     }
