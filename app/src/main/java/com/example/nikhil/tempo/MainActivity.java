@@ -661,22 +661,19 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     private class SongUploadTask extends AsyncTask<Void, Integer, Void>
     {
         @Override
-        protected Void doInBackground(Void... params)
-        {
-            int songCount = 0;
-            for (String fileName : localSongsList)
-            {
-                doFileUpload(fileName);
-                songCount = songCount + 1;
-            }
-            publishProgress(songCount);
-            return null;
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Toast.makeText(getApplicationContext(), "Uploading songs...", Toast.LENGTH_SHORT).show();
         }
 
         @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-            Toast.makeText(getApplicationContext(), values[0] + "/" + localSongsList.size() + " songs have been uploaded", Toast.LENGTH_SHORT).show();
+        protected Void doInBackground(Void... params)
+        {
+            for (String fileName : localSongsList)
+            {
+                doFileUpload(fileName);
+            }
+            return null;
         }
 
         @Override
