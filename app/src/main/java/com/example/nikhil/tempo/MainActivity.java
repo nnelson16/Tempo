@@ -123,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     private String moodInput = "";
     private SwipeRefreshLayout swipeRefreshLayout;
     private AsyncTask<Void, Integer, Void> songUploadTask = null;
+    private HttpURLConnection conn = null;
 
 
 
@@ -132,14 +133,27 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
         checkAndRequestPermissions();
-        localSongsList = scanDeviceForMp3Files();
+
+        if(permissionsGranted)
+        {
+            localSongsList = scanDeviceForMp3Files();
+        }
+
 
         Button uploadButton = (Button) findViewById(R.id.Upload);
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                songUploadTask = new SongUploadTask();
-                songUploadTask.execute();
+                if(localSongsList.isEmpty() || localSongsList == null)
+                {
+                    Toast.makeText(getApplicationContext(), "No songs to upload!", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    songUploadTask = new SongUploadTask();
+                    songUploadTask.execute();
+                }
+
             }
         });
         
@@ -147,8 +161,15 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                musicSrv.playSong(false);
-                controller.show();
+                if(songs.isEmpty())
+                {
+                    Toast.makeText(getApplicationContext(), "No songs to play!", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    musicSrv.playSong(false);
+                    controller.show();
+                }
             }
         });
 
@@ -179,7 +200,15 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             public void onRefresh() {
                 controller.hide();
                 gatherData();
-                musicSrv.playSong(true);
+                if(songs.isEmpty())
+                {
+                    Toast.makeText(getApplicationContext(), "No songs to play!", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    musicSrv.playSong(true);
+                    controller.show();
+                }
             }
         });
     }
@@ -573,6 +602,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         getApplicationContext().unbindService(musicConnection);
         musicSrv=null;
         songUploadTask.cancel(true);
+        conn.disconnect();
+        conn = null;
         Log.v("Tempo", "in onDestroy");
         super.onDestroy();
     }
@@ -637,8 +668,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         }
 
         @Override
-        protected void onProgressUpdate(Integer... values)
-        {
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
             Toast.makeText(getApplicationContext(), values[0] + "/" + localSongsList.size() + " songs have been uploaded", Toast.LENGTH_SHORT).show();
         }
 
@@ -649,78 +680,76 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             Toast.makeText(getApplicationContext(), "All songs have been uploaded!", Toast.LENGTH_SHORT).show();
 
         }
-    }
 
-    private void doFileUpload(String fileName) {
+        private void doFileUpload(String fileName) {
 
-        HttpURLConnection conn = null;
-        DataOutputStream dos = null;
-        DataInputStream inStream = null;
-        String existingFileName = fileName;
-        Log.v("Tempo", "Song Path: "+existingFileName);
-        String lineEnd = "\r\n";
-        String twoHyphens = "--";
-        String boundary = "*****";
-        int bytesRead, bytesAvailable, bufferSize;
-        byte[] buffer;
-        int maxBufferSize = 1 * 1024 * 1024;
-        String urlString = "http://ec2-54-242-27-140.compute-1.amazonaws.com/users/1/upload";
 
-        try {
+            DataOutputStream dos = null;
+            String existingFileName = fileName;
+            Log.v("Tempo", "Song Path: "+existingFileName);
+            String lineEnd = "\r\n";
+            String twoHyphens = "--";
+            String boundary = "*****";
+            int bytesRead, bytesAvailable, bufferSize;
+            byte[] buffer;
+            int maxBufferSize = 1 * 1024 * 1024;
+            String urlString = "http://ec2-54-242-27-140.compute-1.amazonaws.com/users/1/upload";
 
-            //------------------ CLIENT REQUEST
-            FileInputStream fileInputStream = new FileInputStream(new File(existingFileName));
-            // open a URL connection to the Servlet
-            URL url = new URL(urlString);
-            // Open a HTTP connection to the URL
-            conn = (HttpURLConnection) url.openConnection();
-            // Allow Inputs
-            conn.setDoInput(true);
-            // Allow Outputs
-            conn.setDoOutput(true);
-            // Don't use a cached copy.
-            conn.setUseCaches(false);
-            // Use a post method.
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Connection", "Keep-Alive");
-            conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
-            dos = new DataOutputStream(conn.getOutputStream());
-            dos.writeBytes(twoHyphens + boundary + lineEnd);
-            dos.writeBytes("Content-Disposition: form-data; name=\"song[]\";filename=\"" + existingFileName.substring(existingFileName.lastIndexOf("/")+1) + "\"" + lineEnd);
-            dos.writeBytes(lineEnd);
-            // create a buffer of maximum size
-            bytesAvailable = fileInputStream.available();
-            bufferSize = Math.min(bytesAvailable, maxBufferSize);
-            buffer = new byte[bufferSize];
-            // read file and write it into form...
-            bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+            try {
 
-            while (bytesRead > 0) {
-
-                dos.write(buffer, 0, bufferSize);
+                //------------------ CLIENT REQUEST
+                FileInputStream fileInputStream = new FileInputStream(new File(existingFileName));
+                // open a URL connection to the Servlet
+                URL url = new URL(urlString);
+                // Open a HTTP connection to the URL
+                conn = (HttpURLConnection) url.openConnection();
+                // Allow Inputs
+                conn.setDoInput(true);
+                // Allow Outputs
+                conn.setDoOutput(true);
+                // Don't use a cached copy.
+                conn.setUseCaches(false);
+                // Use a post method.
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Connection", "Keep-Alive");
+                conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+                dos = new DataOutputStream(conn.getOutputStream());
+                dos.writeBytes(twoHyphens + boundary + lineEnd);
+                dos.writeBytes("Content-Disposition: form-data; name=\"song[]\";filename=\"" + existingFileName.substring(existingFileName.lastIndexOf("/")+1) + "\"" + lineEnd);
+                dos.writeBytes(lineEnd);
+                // create a buffer of maximum size
                 bytesAvailable = fileInputStream.available();
                 bufferSize = Math.min(bytesAvailable, maxBufferSize);
+                buffer = new byte[bufferSize];
+                // read file and write it into form...
                 bytesRead = fileInputStream.read(buffer, 0, bufferSize);
 
+                while (bytesRead > 0) {
+
+                    dos.write(buffer, 0, bufferSize);
+                    bytesAvailable = fileInputStream.available();
+                    bufferSize = Math.min(bytesAvailable, maxBufferSize);
+                    bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+
+                }
+
+                // send multipart form data necesssary after file data...
+                dos.writeBytes(lineEnd);
+                dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+                // close streams
+                Log.v("Tempo", "File is written");
+                fileInputStream.close();
+                dos.flush();
+                dos.close();
+
+            } catch (MalformedURLException ex) {
+                Log.e("Debug", "error: " + ex.getMessage(), ex);
+            } catch (IOException ioe) {
+                Log.e("Debug", "error: " + ioe.getMessage(), ioe);
             }
 
-            // send multipart form data necesssary after file data...
-            dos.writeBytes(lineEnd);
-            dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
-            // close streams
-            Log.e("Debug", "File is written");
-            fileInputStream.close();
-            dos.flush();
-            dos.close();
-
-        } catch (MalformedURLException ex) {
-            Log.e("Debug", "error: " + ex.getMessage(), ex);
-        } catch (IOException ioe) {
-            Log.e("Debug", "error: " + ioe.getMessage(), ioe);
-        }
 
 
-        
 
         /*
 
@@ -743,6 +772,9 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             Log.e("Debug", "error: " + ioex.getMessage(), ioex);
         }
         */
+        }
     }
+
+
 
 }
