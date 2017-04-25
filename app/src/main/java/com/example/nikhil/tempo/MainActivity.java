@@ -35,7 +35,10 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.lang.Integer;
+import java.net.URI;
 import java.net.URL;
 
 import com.android.volley.Request;
@@ -78,6 +81,7 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.R.attr.button;
+import static android.icu.lang.UCharacter.GraphemeClusterBreak.V;
 import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
 
 
@@ -140,6 +144,22 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         }
 
 
+        Button upvote = (Button) findViewById(R.id.upvote);
+        upvote.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new SongVoteTask().execute(1);
+            }
+        });
+
+        Button downvote = (Button) findViewById(R.id.downvote);
+        downvote.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new SongVoteTask().execute(0);
+            }
+        });
+
         Button uploadButton = (Button) findViewById(R.id.Upload);
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -173,6 +193,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             }
         });
 
+        
+
         mood = (Switch) findViewById(R.id.moodSwitch);
         getMoodInput();
         mood.setOnClickListener(new View.OnClickListener() {
@@ -180,12 +202,20 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             public void onClick(View view) {
                 getMoodInput();
                 gatherData();
-                musicSrv.playSong(true);
-                controller.show();
+                if(songs.isEmpty())
+                {
+                    Toast.makeText(getApplicationContext(), "No songs to play!", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    musicSrv.playSong(true);
+                    controller.show();
+                }
             }
         });
 
         setController();
+
 
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
@@ -775,6 +805,82 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             Log.e("Debug", "error: " + ioex.getMessage(), ioex);
         }
         */
+        }
+
+    }
+
+    private class SongVoteTask extends AsyncTask<Integer, Void, Void>
+    {
+        @Override
+        protected Void doInBackground(Integer... params)
+        {
+            try
+            {
+                //create json object for PUT requst here
+                JSONObject jsonObject = new JSONObject();
+                int songID = songs.get(musicSrv.getSongPosn()).getInt("song_id");
+                jsonObject.put("song_id", songID);
+
+                if(params[0] == 1)
+                {
+                    jsonObject.put("is_upvote", 1);
+                }
+                else
+                {
+                    jsonObject.put("is_upvote", 0);
+                }
+
+
+                URI uri = new URI("http://ec2-54-242-27-140.compute-1.amazonaws.com/users/1/vote");
+                HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
+                conn.setDoOutput(true);
+                conn.setRequestMethod("PUT");
+                conn.addRequestProperty("Content-Type", "application/json");
+                OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream());
+                out.write(jsonObject.toString());
+                out.close();
+
+                try
+                {
+                    try {
+
+                        DataInputStream inStream = new DataInputStream(conn.getInputStream());
+                        String str;
+
+                        while ((str = inStream.readLine()) != null) {
+
+                            Log.e("Debug", "Server Response " + str);
+
+                        }
+
+                        inStream.close();
+
+                    } catch (IOException ioex) {
+                        Log.v("Tempo", "Exception Happened Here");
+                        Log.e("Debug", "error: " + ioex.getMessage(), ioex);
+                    }
+                }
+                catch(Exception e)
+                {
+                    Log.e("Tempo", e.getMessage());
+                }
+                return null;
+            }
+            catch(Exception e)
+            {
+                Log.e("Tempo", e.getMessage());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            Toast.makeText(getApplicationContext(), "Your vote has been recorded!", Toast.LENGTH_SHORT).show();
+            gatherData();
+            if(songs.isEmpty())
+            {
+                Toast.makeText(getApplicationContext(), "No songs to play!", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

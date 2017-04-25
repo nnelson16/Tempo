@@ -164,6 +164,16 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         startForeground(NOTIFY_ID, not);
     }
 
+    public int getSongPosn()
+    {
+        return songPosn;
+    }
+
+    public void resetSongPosn()
+    {
+        songPosn = 0;
+    }
+
     //playback methods
     public int getPosn(){
         return player.getCurrentPosition();
