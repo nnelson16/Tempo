@@ -26,6 +26,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -144,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         }
 
 
-        Button upvote = (Button) findViewById(R.id.upvote);
+        ImageButton upvote = (ImageButton) findViewById(R.id.upvote);
         upvote.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -152,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             }
         });
 
-        Button downvote = (Button) findViewById(R.id.downvote);
+        ImageButton downvote = (ImageButton) findViewById(R.id.downvote);
         downvote.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
