@@ -68,7 +68,7 @@
             android:layout_height="wrap_content"
             android:paddingLeft="25dp"
             android:paddingRight="25dp"
-            android:textSize="21dp"
+            android:textSize="16dp"
             android:textStyle="bold"
             android:ellipsize="end"
             android:id="@+id/weatherText"
@@ -79,18 +79,18 @@
             android:layout_height="wrap_content"
             android:paddingLeft="25dp"
             android:paddingRight="25dp"
-            android:textSize="21dp"
+            android:textSize="16dp"
             android:textStyle="bold"
             android:ellipsize="end"
             android:id="@+id/activityText"
             android:text="activity" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingLeft="25dp"
             android:paddingRight="25dp"
-            android:textSize="18dp"
+            android:textSize="14dp"
             android:textStyle="bold"
             android:gravity="center"
             android:maxLines="1"
@@ -125,11 +125,15 @@
                 android:orientation="horizontal"
                 android:layout_gravity="center">
 
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                <ImageButton
                     android:id="@+id/upvote"
-                    android:text="upvote"/>
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginRight="20dp"
+                    android:background="@drawable/thumbs_up"
+                    android:cropToPadding="false"
+                    android:visibility="visible" />
 
                 <Button
                     android:id="@+id/trigger_button"
@@ -137,34 +141,17 @@
                     android:layout_height="wrap_content"
                     android:text="PLAY" />
 
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                <ImageButton
                     android:id="@+id/downvote"
-                    android:text="downvote"/>
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="20dp"
+                    android:background="@drawable/thumbs_down"
+                    android:cropToPadding="false"
+                    android:visibility="visible" />
 
             </LinearLayout>
-
-
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:textColor="#fff"
-                android:text="Song Name"
-                android:textSize="18dp"
-                android:textStyle="bold"
-                android:id="@+id/songText" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Artist Name"
-                android:textColor="#fff"
-                android:textSize="14dp"
-                android:id="@+id/artistText" />
 
             <Button
                 android:layout_width="wrap_content"
